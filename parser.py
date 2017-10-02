@@ -103,21 +103,20 @@ class Parser:
     def calculate_probability_of_each_rule(self):
         for each_rule in self.unique_rules_and_their_count_dict:
             #self.probability[each_rule] =float(self.unique_rules_and_their_count_dict[each_rule]) / float(self.unique_LHS_count[each_rule.split("-->")[0]])
-            self.probability[each_rule] = math.log(float(self.unique_rules_and_their_count_dict[each_rule])/float(self.unique_LHS_count[each_rule.split("-->")[0]]))
+            self.probability[each_rule] = math.log10(float(self.unique_rules_and_their_count_dict[each_rule])/float(self.unique_LHS_count[each_rule.split("-->")[0]]))
             #self.probability[each_rule] = (float(self.unique_rules_and_their_count_dict[each_rule]) / float(self.unique_LHS_count[each_rule.split("-->")[0]]))
         pass
 
     def parse_sentence(self):
 
-        #sentence = 'Time flies like an arrow'
+        # sentence = 'Time flies like an arrow'
         sentence = 'The flight should be eleven a.m tomorrow .'
-        #sentence = 'Show me the fare .'
-        sentence = sentence.split(' ')
+        # sentence = 'Show me the fare .'
 
+        sentence = sentence.split(' ')
         parse_matrix = dict()
         back_pointers = dict()
 
-        parse_list = list()
         n = len(sentence)
 
         # Initialize with blank dictionaries
@@ -165,10 +164,6 @@ class Parser:
                 #     d[each_LHS] = self.probability[each_LHS+'-->'+word]
                 # parse_matrix[(i - 1, i)] = d
 
-            # parse_matrix[(i-1, i)] = sentence[i-1]
-            #parse_list.append((i-1, i))
-            # parse_matrix[(i - 1, i)] = {}
-
         for l in range(2, n+1):
             for i in range(0, n+1-l):
                 j = i + l
@@ -181,7 +176,7 @@ class Parser:
                 for k in range(i+1, j-1+1):
                     print "Filling ", i, j, " with ", i, k, "and", k, j
                     for e in parse_matrix[(i,k)]:
-                        for f in parse_matrix[(k,j)]:
+                        for f in parse_matrix[(k, j)]:
                             print e, 'is at ik', i, k
                             print f, 'is at kj', k, j
                             lab = e + ' ' + f
@@ -189,10 +184,9 @@ class Parser:
                             if lab in self.reverse_lookup_dict:
                                 print "Found lab = ", lab, "at ", i, k, k, j
                                 for z in self.reverse_lookup_dict[lab]:
-                                    print "Prob z",z , self.probability[z+'-->'+e+' '+f]
-                                    #parse_matrix[(i, k)][e] * parse_matrix[(k, j)][f]
+                                    print "Prob z", z, self.probability[z+'-->'+e+' '+f]
                                     print 'Prob ik', parse_matrix[(i, k)][e]
-                                    print 'Prob kj', parse_matrix[(k,j)][f]
+                                    print 'Prob kj', parse_matrix[(k, j)][f]
                                     #print 'Total ', self.probability[z+'-->'+e+' '+f] * parse_matrix[(i,k)][e] * parse_matrix[(k,j)][f]
                                     print 'Total ', self.probability[z + '-->' + e + ' ' + f] + parse_matrix[(i, k)][e] + parse_matrix[(k, j)][f]
 
@@ -206,30 +200,36 @@ class Parser:
                                     if z in parse_matrix[(i, j)]:
                                         print "True"
                                         # ######################### For Multiplication ###############################
-                                        # parse_matrix[(i, j)][z] = max(self.probability[z + '-->' + e + ' ' + f] * parse_matrix[(i, k)][e] * parse_matrix[(k, j)][f], parse_matrix[(i, j)][z])
-                                        p = self.probability[z + '-->' + e + ' ' + f] * parse_matrix[(i, k)][e] * \
-                                            parse_matrix[(k, j)][f]
-                                        if p > parse_matrix[(i, j)][z]:
+                                        # parse_matrix[(i, j)][z] = max(self.probability[z + '-->' + e + ' ' + f] * parse_matrix[(i, k)][e] * parse_matrix[(k, j)][f], parse_matrix[(i, j)][z]) OLD WRONG
+
+                                        # p = self.probability[z + '-->' + e + ' ' + f] * parse_matrix[(i, k)][e] * \
+                                        #     parse_matrix[(k, j)][f]
+                                        # if p > parse_matrix[(i, j)][z]:
+                                        #     parse_matrix[(i, j)][z] = p
+                                        #     back_pointers[(i, j)][z] = (k, e, f)
+
+
+                                        ######################### For Addition #####################################
+                                        parse_matrix[(i, j)][z] = max(self.probability[z + '-->' + e + ' ' + f] + parse_matrix[(i, k)][e] + parse_matrix[(k, j)][f], parse_matrix[(i, j)][z])
+                                        p = self.probability[z + '-->' + e + ' ' + f] + parse_matrix[(i, k)][e] + parse_matrix[(k, j)][f]
+                                        if p > parse_matrix[(i,j)][z]:
                                             parse_matrix[(i, j)][z] = p
                                             back_pointers[(i, j)][z] = (k, e, f)
-
-
-                                        # ######################### FOr Addition #####################################
-                                        # parse_matrix[(i, j)][z] = max(self.probability[z + '-->' + e + ' ' + f] + parse_matrix[(i, k)][e] + parse_matrix[(k, j)][f], parse_matrix[(i, j)][z])
-                                        # p = self.probability[z + '-->' + e + ' ' + f] + parse_matrix[(i, k)][e] + parse_matrix[(k, j)][f]
-                                        # if p > parse_matrix[(i,j)][z]:
-                                        #     parse_matrix[(i, j)][z] = p
-
                                     else:
                                         print "False"
-                                        parse_matrix[(i, j)][z] = self.probability[z + '-->' + e + ' ' + f] * parse_matrix[(i, k)][e] * \
-                                                                  parse_matrix[(k, j)][f]
-                                        #parse_matrix[(i, j)][z] = self.probability[z + '-->' + e + ' ' + f] + parse_matrix[(i, k)][e] + parse_matrix[(k, j)][f]
+
+                                        # ####################### Multiplication #####################################
+                                        # parse_matrix[(i, j)][z] = self.probability[z + '-->' + e + ' ' + f] * parse_matrix[(i, k)][e] * parse_matrix[(k, j)][f]
+
+                                        # ####################### Addition ###########################################
+                                        parse_matrix[(i, j)][z] = self.probability[z + '-->' + e + ' ' + f] + parse_matrix[(i, k)][e] + parse_matrix[(k, j)][f]
+
                                         back_pointers[(i, j)][z] = (k, e, f)
                                     print "===================================="
                                 print "Filling ij", i, j, "with ", self.reverse_lookup_dict[lab]
                             else:
                                 print "Not Found ", i, k, k, j
+                                pass
                             print "\n"
 
         self.parse_matrix = parse_matrix
