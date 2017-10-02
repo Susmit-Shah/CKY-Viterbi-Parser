@@ -117,21 +117,44 @@ class Parser:
         n = len(sentence)
 
         for i in range(1, n+1):
+            parse_matrix[(i-1, i)] = {}
+        print parse_matrix
+
+        for i in range(1, n+1):
             word = sentence[i-1]
             if sentence[i-1] in self.reverse_lookup_dict:
                 d = {}
                 all_LHS = self.reverse_lookup_dict[sentence[i-1]]
                 for each_LHS in all_LHS:
-                    d[each_LHS] = self.probability[each_LHS+'-->'+word]
-                parse_matrix[(i-1, i)] = d
-                #parse_matrix[(i-1, i)] = self.reverse_lookup_dict[sentence[i-1]]
+                    if each_LHS in parse_matrix[(i-1, i)]:
+                        p = self.probability[each_LHS+'-->'+word]
+                        if p > parse_matrix[(i-1, i)][each_LHS]:
+                            parse_matrix[(i-1, i)][each_LHS] = p
+                            #Update backpinter here
+                    else:
+                        parse_matrix[(i-1), i][each_LHS] = self.probability[each_LHS+'-->'+word]
+                        # Add backpointer here
+
+                #    d[each_LHS] = self.probability[each_LHS+'-->'+word]
+                # parse_matrix[(i-1, i)] = d
+
+                # parse_matrix[(i-1, i)] = self.reverse_lookup_dict[sentence[i-1]] wrong
             else:
-                #parse_matrix[(i-1, i)] = self.reverse_lookup_dict['<unk>']
+                # parse_matrix[(i-1, i)] = self.reverse_lookup_dict['<unk>'] wrong
                 d = {}
                 all_LHS = self.reverse_lookup_dict['<unk>']
                 for each_LHS in all_LHS:
-                    d[each_LHS] = self.probability[each_LHS+'-->'+word]
-                parse_matrix[(i - 1, i)] = d
+                    if each_LHS in parse_matrix[(i - 1, i)]:
+                        p = self.probability[each_LHS + '-->' + word]
+                        if p > parse_matrix[(i - 1, i)][each_LHS]:
+                            parse_matrix[(i - 1, i)][each_LHS] = p
+                            # Update backpinter here
+                    else:
+                        parse_matrix[(i - 1), i][each_LHS] = self.probability[each_LHS + '-->' + word]
+                        # Add backpointer here
+
+                #     d[each_LHS] = self.probability[each_LHS+'-->'+word]
+                # parse_matrix[(i - 1, i)] = d
 
             # parse_matrix[(i-1, i)] = sentence[i-1]
             #parse_list.append((i-1, i))
