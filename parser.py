@@ -8,6 +8,9 @@ class Parser:
     unique_LHS_count = dict()
     probability = dict()
     reverse_lookup_dict = dict()
+    parse_matrix = dict()
+    back_pointers = dict()
+    output_string = ''
 
     def __init__(self):
         self.all_lines = self.read_file('train.trees.pre.unk')
@@ -100,25 +103,27 @@ class Parser:
     def calculate_probability_of_each_rule(self):
         for each_rule in self.unique_rules_and_their_count_dict:
             #self.probability[each_rule] =float(self.unique_rules_and_their_count_dict[each_rule]) / float(self.unique_LHS_count[each_rule.split("-->")[0]])
-            #self.probability[each_rule] = math.log(float(self.unique_rules_and_their_count_dict[each_rule])/float(self.unique_LHS_count[each_rule.split("-->")[0]]))
-            self.probability[each_rule] = (float(self.unique_rules_and_their_count_dict[each_rule]) / float(self.unique_LHS_count[each_rule.split("-->")[0]]))
+            self.probability[each_rule] = math.log(float(self.unique_rules_and_their_count_dict[each_rule])/float(self.unique_LHS_count[each_rule.split("-->")[0]]))
+            #self.probability[each_rule] = (float(self.unique_rules_and_their_count_dict[each_rule]) / float(self.unique_LHS_count[each_rule.split("-->")[0]]))
         pass
 
     def parse_sentence(self):
 
         #sentence = 'Time flies like an arrow'
-        #sentence = 'The flight should be eleven a.m tomorrow .'
-        sentence = 'Show me the fare .'
+        sentence = 'The flight should be eleven a.m tomorrow .'
+        #sentence = 'Show me the fare .'
         sentence = sentence.split(' ')
 
         parse_matrix = dict()
+        back_pointers = dict()
 
         parse_list = list()
         n = len(sentence)
 
+        # Initialize with blank dictionaries
         for i in range(1, n+1):
             parse_matrix[(i-1, i)] = {}
-        print parse_matrix
+            back_pointers[(i-1, i)] = {}
 
         for i in range(1, n+1):
             word = sentence[i-1]
@@ -130,9 +135,11 @@ class Parser:
                         p = self.probability[each_LHS+'-->'+word]
                         if p > parse_matrix[(i-1, i)][each_LHS]:
                             parse_matrix[(i-1, i)][each_LHS] = p
+                            back_pointers[(i-1,i)][each_LHS] = (-1, word, word)
                             #Update backpinter here
                     else:
-                        parse_matrix[(i-1), i][each_LHS] = self.probability[each_LHS+'-->'+word]
+                        parse_matrix[(i-1, i)][each_LHS] = self.probability[each_LHS+'-->'+word]
+                        back_pointers[(i-1, i)][each_LHS] = (-1, word, word)
                         # Add backpointer here
 
                 #    d[each_LHS] = self.probability[each_LHS+'-->'+word]
@@ -148,9 +155,11 @@ class Parser:
                         p = self.probability[each_LHS + '-->' + word]
                         if p > parse_matrix[(i - 1, i)][each_LHS]:
                             parse_matrix[(i - 1, i)][each_LHS] = p
+                            back_pointers[(i - 1, i)][each_LHS] = (-1, '<unk>', '<unk>')
                             # Update backpinter here
                     else:
                         parse_matrix[(i - 1), i][each_LHS] = self.probability[each_LHS + '-->' + word]
+                        back_pointers[(i - 1, i)][each_LHS] = (-1, '<unk>', '<unk>')
                         # Add backpointer here
 
                 #     d[each_LHS] = self.probability[each_LHS+'-->'+word]
@@ -164,6 +173,7 @@ class Parser:
             for i in range(0, n+1-l):
                 j = i + l
                 parse_matrix[(i,j)] = {}
+                back_pointers[(i,j)] = {}
 
         for l in range(2, n+1):
             for i in range(0, n+1-l):
@@ -201,6 +211,7 @@ class Parser:
                                             parse_matrix[(k, j)][f]
                                         if p > parse_matrix[(i, j)][z]:
                                             parse_matrix[(i, j)][z] = p
+                                            back_pointers[(i, j)][z] = (k, e, f)
 
 
                                         # ######################### FOr Addition #####################################
@@ -214,13 +225,45 @@ class Parser:
                                         parse_matrix[(i, j)][z] = self.probability[z + '-->' + e + ' ' + f] * parse_matrix[(i, k)][e] * \
                                                                   parse_matrix[(k, j)][f]
                                         #parse_matrix[(i, j)][z] = self.probability[z + '-->' + e + ' ' + f] + parse_matrix[(i, k)][e] + parse_matrix[(k, j)][f]
+                                        back_pointers[(i, j)][z] = (k, e, f)
                                     print "===================================="
                                 print "Filling ij", i, j, "with ", self.reverse_lookup_dict[lab]
                             else:
                                 print "Not Found ", i, k, k, j
                             print "\n"
-        for k in parse_matrix:
-            print str(k) + ' = ' + str(parse_matrix[k])
+
+        self.parse_matrix = parse_matrix
+        self.back_pointers = back_pointers
+
+        for k in self.parse_matrix:
+            print str(k) + ' = ' + str(self.parse_matrix[k])
+        print "\n\n"
+        for k in self.back_pointers:
+            print str(k) + ' = ' + str(self.back_pointers[k])
+
+        print "\n\n"
+        output = self.print_tree(self.back_pointers[(0,n)], 0, n, 'TOP')
+        return output
+
+    def print_tree(self, back_pointer, i, j, name):
+        # print "\n"
+        # print "Received Data :: ", back_pointer, i, j
+        # print "Label :: ", name
+        self.output_string += '(' + name + ' '
+        data = back_pointer[name]
+        # print "data :: ", data
+        k, node1, node2 = data[0], data[1], data[2]
+        if k == -1:
+            # print "Final Data :: ", node1
+            self.output_string += node1 + ')'
+            return
+        else:
+            self.print_tree(self.back_pointers[(i, k)], i, k, node1)
+            self.output_string += ' '
+            self.print_tree(self.back_pointers[(k, j)], k, j, node2)
+            self.output_string += ')'
+        return self.output_string
+
 
     def output1(self):
 
@@ -245,9 +288,7 @@ parser.output1()
 #
 # for p in parser.probability:
 #     print p, " = ", parser.probability[p]
-#
-# print len(parser.probability)
-# print len(parser.unique_rules_and_their_count_dict)
 
 
-parser.parse_sentence()
+print parser.parse_sentence()
+
