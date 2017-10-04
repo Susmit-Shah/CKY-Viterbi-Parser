@@ -228,9 +228,84 @@ class Tree(object):
         assert len(roots) == 1
         self.root = roots[0]
 
+
+    def horizontal_markov(self, root):
+        #print "Root :: ", root.label
+        if root.children:
+            if root.label != 'TOP':
+                siblings = []
+                # If * in label add its sibling to label
+                if '*' in root.label:
+                    parent = root.parent
+                    for each_child in parent.children:
+                        if each_child.label != root.label:
+                            siblings.append(each_child.label)
+                    root.label = root.label + "#" + " ".join(siblings)
+                    #print root.label
+
+                    # print "Siblings", siblings
+
+            for each_child in root.children:
+                self.horizontal_markov(each_child)
+            pass
+        else:
+            return
+
+    def remove_horizontal_markov(self, root):
+        if root.children:
+            if '#' in root.label:
+                label = root.label.split('#')[0]
+                root.label = label
+
+        for each_child in root.children:
+            self.remove_horizontal_markov(each_child)
+        else:
+            return
+
+    def vertical_markov(self, root):
+        #print "Root :: ", root.label
+        if root.children:
+            if root.label != 'TOP':
+                # If * in label add its parent to label
+                if '*' in root.label:
+                    parent = root.parent
+                    root.label = parent.label + "#" + root.label
+                    #print root.label
+
+            for each_child in root.children:
+                self.vertical_markov(each_child)
+            pass
+        else:
+            return
+
+    def remove_vertical_markov(self, root):
+        if root.children:
+            if '#' in root.label:
+                label = root.label.split('#')[-1]
+                root.label = label
+
+        for each_child in root.children:
+            self.remove_vertical_markov(each_child)
+        else:
+            return
+
+    def mark_base_node(self):
+        chlidrens = list(self.bottomup())
+        for node in chlidrens:
+            if 'NP' in node.label:
+                c = node.children
+                if 'NP' not in c[0].label and 'NP' not in c[1].label:
+                    node.label = node.label + '$$'
+
+    def unmark(self):
+        nodes = list(self.bottomup())
+        for node in nodes:
+            if '$$' in node.label:
+                node.label = node.label.split('$$')[0]
+
+
 if __name__ == "__main__":
     import sys
     for line in sys.stdin:
         t = Tree.from_str(line)
         print t
-        

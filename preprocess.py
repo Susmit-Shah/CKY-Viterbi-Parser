@@ -14,6 +14,9 @@ for line in fileinput.input():
 
     # The tree is now strictly binary branching, so that the CFG is in Chomsky normal form.
 
+    t.vertical_markov(t.root)
+    #t.horizontal_markov(t.root)
+
     # Make sure that all the roots still have the same label.
     assert t.root.label == 'TOP'
 

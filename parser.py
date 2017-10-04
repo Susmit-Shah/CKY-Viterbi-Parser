@@ -2,6 +2,10 @@ import tree
 import bigfloat
 import operator
 import math
+import time
+import numpy
+import matplotlib.pyplot as plt
+import os
 
 class Parser:
     unique_rules_and_their_count_dict = dict()
@@ -246,8 +250,6 @@ class Parser:
         else:
             return ''
 
-
-
     def print_tree(self, back_pointer, i, j, name):
         # print "\n"
         # print "Received Data :: ", back_pointer, i, j
@@ -267,6 +269,21 @@ class Parser:
             self.output_string += ')'
         return self.output_string
 
+    def plot_graph(self, length, time, length_log, time_log):
+
+        stat = numpy.polyfit(length_log, time_log, 1)
+        m = stat[0]
+        c = stat[1]
+
+        c_antilog = 10**c
+        print m
+
+        plt.xlabel("Sentence Length (log10)")
+        plt.ylabel("Time (log10)")
+
+        plt.loglog(length, (c_antilog*(pow(length, m))))
+        plt.loglog(length, time, 'bo')
+        plt.show()
 
     def output1(self):
 
@@ -296,7 +313,7 @@ for p in parser.probability:
 sentence = 'The flight should be eleven a.m tomorrow .'
 #sentence = 'Show me the fare .'
 
-#print parser.parse_sentence(sentence)
+print parser.parse_sentence(sentence)
 
 fh = open('dev.strings', 'r')
 data = fh.read().strip().split('\n')
@@ -305,11 +322,36 @@ fh.close()
 fh = open('dev.parses', 'w')
 i = 0
 
-#for each_sentence in data:
+time_array = []
+length_array = []
+time_array_log = []
+length_array_log = []
+
 for i in range(0, len(data)):
     print data[i]
-    print parser.parse_sentence(data[i])
+    length_array_log.append(math.log10(len(data[i].split(" "))))
+    length_array.append(len(data[i].split(" ")))
+    start_time = time.clock()
+    parser.parse_sentence(data[i])
+    #ime.sleep(0.00055)
+    end_time = time.clock() - start_time
+    time_array.append(end_time)
+    time_array_log.append(math.log10(end_time))
     fh.write(parser.parse_sentence(data[i]))
     fh.write('\n')
     print i+1
 
+fh.close()
+print length_array
+print time_array
+parser.plot_graph(numpy.array(length_array), numpy.array(time_array), numpy.array(length_array_log), numpy.array(time_array_log))
+
+#
+# # print "\n\n"
+# s = '(TOP (S_VP (VB List) (NP (NP* (NP* (NP (DT the) (NNS flights)) (PP (IN from) (NP_NNP Baltimore))) (PP (TO to) (NP_NNP Seattle))) (SBAR (WHNP_WDT that) (S_VP (VBP stop) (PP (IN in) (NP_NNP Minneapolis)))))) (PUNC .))'
+# t = tree.Tree.from_str(s)
+# print t
+# t.vertical_markov(t.root)
+# print t
+# t.remove_vertical_markov(t.root)
+# print t
