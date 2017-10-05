@@ -5,7 +5,7 @@ import math
 import time
 import numpy
 import matplotlib.pyplot as plt
-import os
+import sys
 
 class Parser:
     unique_rules_and_their_count_dict = dict()
@@ -16,8 +16,9 @@ class Parser:
     back_pointers = dict()
     output_string = ''
 
-    def __init__(self):
-        self.all_lines = self.read_file('train.trees.pre.unk')
+    def __init__(self, training_file):
+        #self.all_lines = self.read_file('train.trees.pre.unk')
+        self.all_lines = self.read_file(training_file)
         self.generate_rule_count_dict()
         self.calculate_probability_of_each_rule()
         self.generate_reverse_lookup()
@@ -244,6 +245,7 @@ class Parser:
         #    print str(k) + ' = ' + str(self.back_pointers[k])
         #print "\n\n"
 
+
         if 'TOP' in self.back_pointers[(0,n)]:
             output = self.print_tree(self.back_pointers[(0, n)], 0, n, 'TOP')
             return output
@@ -276,7 +278,7 @@ class Parser:
         c = stat[1]
 
         c_antilog = 10**c
-        print m
+        #print "Value of k is :: ", m
 
         plt.xlabel("Sentence Length (log10)")
         plt.ylabel("Time (log10)")
@@ -293,29 +295,40 @@ class Parser:
         print "Most frequent rule: ", max_rule
         print "Count of ", max_rule," : ", max(self.unique_rules_and_their_count_dict.iteritems(), key=operator.itemgetter(1))[1]
 
+    def output2(self):
 
-parser = Parser()
-# parser.print_data()
+        sentence = 'The flight should be eleven a.m tomorrow .'
+        print "Input :: ", sentence
+        print "Output ::", self.parse_sentence(sentence)
+        print "Probability :: ", self.parse_matrix[(0,len(sentence.split(" ")))]
+
+
+training_file = sys.argv[1]
+input_file = sys.argv[2]
+
+parser = Parser(training_file)
+
 
 # Call this to generate basic dictionaries
 # parser.generate_rule_count_dict()
 
-parser.output1()
+#parser.output1()
+#parser.output2()
+
 # for p in parser.unique_rules_and_their_count_dict:
 #     print p, " = ", parser.unique_rules_and_their_count_dict[p]
 
-# print "\n"
-#
-for p in parser.probability:
-    print p, " = ", parser.probability[p]
 
-#sentence = 'I would like it to have a stop in New York and I would like a flight that serves breakfast .'
-sentence = 'The flight should be eleven a.m tomorrow .'
-#sentence = 'Show me the fare .'
+# for p in parser.probability:
+#     print p, " = ", parser.probability[p]
 
-print parser.parse_sentence(sentence)
+# sentence = 'The flight should be eleven a.m tomorrow .'
+# #sentence = 'Show me the fare .'
+# print parser.parse_sentence(sentence)
 
-fh = open('dev.strings', 'r')
+
+#fh = open('dev.strings', 'r')
+fh = open(input_file, 'r')
 data = fh.read().strip().split('\n')
 fh.close()
 
@@ -328,25 +341,24 @@ time_array_log = []
 length_array_log = []
 
 for i in range(0, len(data)):
-    print data[i]
+    #print data[i]
     length_array_log.append(math.log10(len(data[i].split(" "))))
     length_array.append(len(data[i].split(" ")))
     start_time = time.clock()
     parser.parse_sentence(data[i])
-    #ime.sleep(0.00055)
     end_time = time.clock() - start_time
     time_array.append(end_time)
     time_array_log.append(math.log10(end_time))
     fh.write(parser.parse_sentence(data[i]))
     fh.write('\n')
-    print i+1
+    #print i+1
 
 fh.close()
-print length_array
-print time_array
+# print length_array
+# print time_array
 parser.plot_graph(numpy.array(length_array), numpy.array(time_array), numpy.array(length_array_log), numpy.array(time_array_log))
 
-#
+
 # print "\n\n"
 # s = '(TOP (S_VP (VB List) (NP (NP* (NP* (NP (DT the) (NNS flights)) (PP (IN from) (NP_NNP Baltimore))) (PP (TO to) (NP_NNP Seattle))) (SBAR (WHNP_WDT that) (S_VP (VBP stop) (PP (IN in) (NP_NNP Minneapolis)))))) (PUNC .))'
 # t = tree.Tree.from_str(s)

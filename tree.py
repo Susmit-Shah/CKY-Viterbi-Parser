@@ -198,7 +198,7 @@ class Tree(object):
         nodes = list(self.bottomup())
         for node in nodes:
             if len(node.children) > 2:
-                if node.label in ['SQ', 'NP']:
+                if node.label in ['SQ','NP']:
                     # create a right-branching structure
                     children = list(node.children)
                     children.reverse()
