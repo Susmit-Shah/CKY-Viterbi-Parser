@@ -9,8 +9,10 @@ for line in fileinput.input():
         print
         continue
 
-    #t.remove_horizontal_markov(t.root)
-    t.remove_vertical_markov(t.root)
+    t.r_vertical()
+    t.remove_horizontal_markov(t.root)
+    #t.remove_vertical_markov_JHOL(t.root)
+
 
     t.restore_unit()
     t.unbinarize()

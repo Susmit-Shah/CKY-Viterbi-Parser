@@ -347,11 +347,18 @@ print time_array
 parser.plot_graph(numpy.array(length_array), numpy.array(time_array), numpy.array(length_array_log), numpy.array(time_array_log))
 
 #
-# # print "\n\n"
+# print "\n\n"
 # s = '(TOP (S_VP (VB List) (NP (NP* (NP* (NP (DT the) (NNS flights)) (PP (IN from) (NP_NNP Baltimore))) (PP (TO to) (NP_NNP Seattle))) (SBAR (WHNP_WDT that) (S_VP (VBP stop) (PP (IN in) (NP_NNP Minneapolis)))))) (PUNC .))'
 # t = tree.Tree.from_str(s)
 # print t
-# t.vertical_markov(t.root)
+# #t.vertical_markov(t.root)
+# t.horizontal_markov(t.root)
 # print t
-# t.remove_vertical_markov(t.root)
+# #t.vertical()
+# t.vertical_markov_2(t.root)
+# print t
+# #t.r_vertical()
+# t.remove_vertical_markov_2(t.root)
+# print t
+# t.remove_horizontal_markov(t.root)
 # print t

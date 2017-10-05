@@ -198,7 +198,7 @@ class Tree(object):
         nodes = list(self.bottomup())
         for node in nodes:
             if len(node.children) > 2:
-                if node.label in ['SQ']:
+                if node.label in ['SQ', 'NP']:
                     # create a right-branching structure
                     children = list(node.children)
                     children.reverse()
@@ -262,7 +262,47 @@ class Tree(object):
         else:
             return
 
-    def vertical_markov(self, root):
+    def vertical(self):
+        nodes = list(self.bottomup())
+        for node in nodes:
+            if '*' in node.label:
+                node.label = node.label + '%%' + node.parent.label
+
+    def r_vertical(self):
+        nodes = list(self.bottomup())
+        for node in nodes:
+            if '%%' in node.label:
+                label = node.label.split('%%')
+                node.label = label[0]
+
+    def vertical_markov_2(self, root):
+        #print "Root :: ", root.label
+        if root.children:
+            if root.label != 'TOP':
+                # If * in label add its parent to label
+                if '*' in root.label:
+                    parent = root.parent
+                    root.label = root.label + "%%" + parent.label
+                    #print root.label
+
+            for each_child in root.children:
+                self.vertical_markov_2(each_child)
+            pass
+        else:
+            return
+
+    def remove_vertical_markov_2(self, root):
+        if root.children:
+            if '#' in root.label:
+                label = root.label.split('%%')[0]
+                root.label = label
+
+        for each_child in root.children:
+            self.remove_vertical_markov_2(each_child)
+        else:
+            return
+
+    def vertical_markov_JHOL(self, root):
         #print "Root :: ", root.label
         if root.children:
             if root.label != 'TOP':
@@ -273,19 +313,19 @@ class Tree(object):
                     #print root.label
 
             for each_child in root.children:
-                self.vertical_markov(each_child)
+                self.vertical_markov_JHOL(each_child)
             pass
         else:
             return
 
-    def remove_vertical_markov(self, root):
+    def remove_vertical_markov_JHOL(self, root):
         if root.children:
             if '#' in root.label:
                 label = root.label.split('#')[-1]
                 root.label = label
 
         for each_child in root.children:
-            self.remove_vertical_markov(each_child)
+            self.remove_vertical_markov_JHOL(each_child)
         else:
             return
 
